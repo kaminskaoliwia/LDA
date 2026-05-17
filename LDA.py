@@ -120,8 +120,10 @@ for x in X1:
     SW += d @ d.T
 
 # Between-class scatter matrix S_B
-d = (mu0 - mu1).reshape(-1, 1)
-SB = len(X0) * (d @ d.T) + len(X1) * (d @ d.T)
+mu = X.mean(axis=0)
+d0 = (mu0 - mu).reshape(-1, 1)
+d1 = (mu1 - mu).reshape(-1, 1)
+SB = len(X0) * (d0 @ d0.T) + len(X1) * (d1 @ d1.T)
 
 print("S_W:")
 print(SW.round(2), end='\n\n')
@@ -129,16 +131,23 @@ print("\nS_B:")
 print(SB.round(2), end='\n\n')
 
 # Discriminant axis
-a = np.linalg.inv(SW) @ (mu0 - mu1)
+# a = np.linalg.inv(SW) @ (mu0 - mu1)
+
+criterion_matrix = np.linalg.inv(SW) @ SB
+eigenvalues, eigenvectors = np.linalg.eig(criterion_matrix)
+
+# Eigenvector with largest eigenvalue
+idx = np.argmax(eigenvalues)
+a = eigenvectors[:, idx]
 
 print("Discriminant direction a:")
 print(a.round(4), end='\n\n')
 
 # Normalized discriminant axis
-a = a / np.linalg.norm(a)
+# a = a / np.linalg.norm(a)
 
-print("Normalized discriminant direction a:")
-print(a.round(4), end='\n\n')
+# print("Normalized discriminant direction a:")
+# print(a.round(4), end='\n\n')
 
 # Projecting data on the discriminant axis
 projections = X @ a
@@ -180,7 +189,7 @@ print(f"sklearn accuracy: {(y_pred == y).mean():.1%}", end='\n\n')
 cm = confusion_matrix(y, y_pred)
 disp = ConfusionMatrixDisplay(cm, display_labels=["genuine", "forged"])
 disp.plot()
-plt.title("Confusion matrix – sklearn LDA")
+plt.title("Confusion matrix - sklearn LDA")
 plt.savefig("graphs/confusion_matrix.png")
 #plt.show()
 
